@@ -1,0 +1,6 @@
+projectKey=26052_jacoco_Java_Project_Scan:master
+serverUrl=http://127.0.0.1:9000
+serverVersion=7.9.6.41879
+dashboardUrl=http://127.0.0.1:9000/dashboard?id=26052_jacoco_Java_Project_Scan%3Amaster
+ceTaskId=AZHbfYtx9PsasDs7Lg2V
+ceTaskUrl=http://127.0.0.1:9000/api/ce/task?id=AZHbfYtx9PsasDs7Lg2V
