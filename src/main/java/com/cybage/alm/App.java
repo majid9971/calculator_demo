@@ -7,6 +7,7 @@ package com.cybage.alm;
 public class App {
 
 	public int sum(int a, int b) {
+		System.out.println("HHHH");
 		return a + b;
 	}
 
