@@ -35,8 +35,12 @@ jobs:
       - name: Install Maven
         run: |
           curl -o maven.zip https://dlcdn.apache.org/maven/maven-3/3.8.5/binaries/apache-maven-3.8.5-bin.zip
-          tar -xf maven.zip -C $env:USERPROFILE
-          echo "Maven installed successfully"
+          Expand-Archive -Path maven.zip -DestinationPath $env:USERPROFILE/maven
+          $env:PATH += ";$env:USERPROFILE/maven/apache-maven-3.8.5/bin"
+
+      # Verify Maven Installation
+      - name: Verify Maven Installation
+        run: mvn -version
 
       # Clean Workspace
       - name: Clean Workspace
