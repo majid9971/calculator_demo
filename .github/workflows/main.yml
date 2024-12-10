@@ -31,11 +31,12 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
 
-      # Setup Maven
-      - name: Setup Maven
-        uses: s4u/setup-maven@v2
-        with:
-          maven-version: '3.8.5'
+      # Install Maven Manually
+      - name: Install Maven
+        run: |
+          curl -o maven.zip https://dlcdn.apache.org/maven/maven-3/3.8.5/binaries/apache-maven-3.8.5-bin.zip
+          tar -xf maven.zip -C $env:USERPROFILE
+          echo "Maven installed successfully"
 
       # Clean Workspace
       - name: Clean Workspace
