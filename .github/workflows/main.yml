@@ -1,113 +1,39 @@
-name: Maven Build and Deploy
+name: SonarQube Analysis Workflow
 
 on:
   push:
     branches:
       - master
   pull_request:
-    branches:
-      - master
-
-env:
-  NEXUS_VERSION: "nexus3"
-  NEXUS_PROTOCOL: "http"
-  NEXUS_URL: "172.27.59.174:8081"
-  NEXUS_REPOSITORY: "maven-releases-artifactory"
-  ARTIFACT_VERSION: ${{ github.run_number }}
 
 jobs:
-  build:
-    runs-on: windows-latest
+  sonar:
+    runs-on: ubuntu-latest
 
     steps:
-      # Checkout Code
-      - name: Checkout Code
+      # Step 1: Checkout code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # Setup Java
-      - name: Setup Java
+      # Step 2: Set up JDK 11
+      - name: Set up JDK 11
         uses: actions/setup-java@v3
         with:
-          java-version: '11'
-          distribution: 'adopt'
+          java-version: 11
 
-      # Install Maven Manually
+      # Step 3: Install Maven
       - name: Install Maven
-        run: |
-          curl -o maven.zip https://dlcdn.apache.org/maven/maven-3/3.8.5/binaries/apache-maven-3.8.5-bin.zip
-          Expand-Archive -Path maven.zip -DestinationPath $env:USERPROFILE/maven
-          $env:PATH += ";$env:USERPROFILE/maven/apache-maven-3.8.5/bin"
+        run: sudo apt-get install -y maven
 
-      # Verify Maven Installation
-      - name: Verify Maven Installation
-        run: mvn -version
-
-      # Clean Workspace
-      - name: Clean Workspace
-        run: mvn clean
-
-      # Validate
-      - name: Validate
-        run: mvn validate
-
-      # Compile
-      - name: Compile
-        run: mvn compile
-
-      # Run Unit Tests
-      - name: Run Unit Tests
-        run: mvn test
-
-      # Publish Test Results
-      - name: Publish Test Results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: '**/target/surefire-reports/*.xml'
-
-      # Generate JaCoCo Code Coverage Report
-      - name: Generate JaCoCo Report
-        run: mvn jacoco:prepare-agent test jacoco:report -Djacoco.report.format=xml
-
-      # SonarQube Analysis (using credentials)
+      # Step 4: SonarQube Analysis (using credentials)
       - name: SonarQube Analysis
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
           SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
         run: |
-          mvn sonar:sonar \
+          mvn clean verify sonar:sonar \
+            -Dsonar.host.url=${{ env.SONAR_HOST_URL }} \
             -Dsonar.login=${{ env.SONAR_USERNAME }} \
             -Dsonar.password=${{ env.SONAR_PASSWORD }} \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-
-      # Package
-      - name: Package
-        run: mvn package -DskipTests=true
-
-      # Install
-      - name: Install
-        run: mvn install -DskipTests=true
-
-      # Archive Artifact
-      - name: Archive Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: artifact
-          path: 'target/*.jar'
-
-      # Upload Artifact to Nexus
-      - name: Upload Artifact to Nexus
-        env:
-          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-        run: |
-          mvn deploy:deploy-file \
-            -Durl=${{ env.NEXUS_PROTOCOL }}://${{ env.NEXUS_URL }}/repository/${{ env.NEXUS_REPOSITORY }} \
-            -DrepositoryId=nexus \
-            -Dfile=target/my-artifact-${{ env.ARTIFACT_VERSION }}.jar \
-            -DgroupId=com.example \
-            -DartifactId=my-artifact \
-            -Dversion=${{ env.ARTIFACT_VERSION }} \
-            -Dpackaging=jar
