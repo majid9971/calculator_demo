@@ -24,10 +24,27 @@ jobs:
           java-version: 11
           distribution: temurin
 
-      # Step 4: Ensure Maven is Installed
+       # Step 3: Install Maven with lock handling
       - name: Install Maven
         run: |
+          # Wait and retry if lock file exists
+          while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+            echo "Waiting for lock to be released..."
+            sleep 5
+          done
+
+          # If lock still exists, remove it
+          sudo rm -f /var/lib/dpkg/lock-frontend
+          sudo rm -f /var/lib/dpkg/lock
+          sudo rm -f /var/cache/apt/archives/lock
+          
+          # Fix any broken dpkg process
+          sudo dpkg --configure -a
+          
+          # Install Maven
+          sudo apt-get update
           sudo apt-get install -y maven
+
 
       # Step 5: SonarQube Analysis (using credentials)
       - name: SonarQube Analysis
