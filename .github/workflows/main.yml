@@ -41,3 +41,17 @@ jobs:
             -Dsonar.login=${{ env.SONAR_USERNAME }} \
             -Dsonar.password=${{ env.SONAR_PASSWORD }} \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+  notify:
+    runs-on: ubuntu-latest
+    needs: sonar
+    if: always()  # Run this job regardless of the result of previous jobs
+
+    steps:
+      # Step 1: Send notification to Slack
+      - name: Notify Slack
+        uses: slackapi/slack-github-action@v1.22.0
+        with:
+          channel: '#your-slack-channel'  # Replace with your Slack channel name
+          status: ${{ job.status }}  # Use the status of the previous job (success or failure)
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
