@@ -11,11 +11,7 @@ jobs:
     runs-on: self-hosted # Ensure your runner has the 'self-hosted' label
 
     steps:
-      # Step 1: Update and Upgrade Linux Packages (Optional but Recommended)
-      - name: Update System Packages
-        run: |
-          sudo apt-get update
-          sudo apt-get upgrade -y
+     
 
       # Step 2: Checkout code
       - name: Checkout code
