@@ -32,7 +32,7 @@ jobs:
       # Step 5: SonarQube Analysis (using credentials)
       - name: SonarQube Analysis
         env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_HOST_URL: http://172.27.59.119:9000
           SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
           SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
         run: |
