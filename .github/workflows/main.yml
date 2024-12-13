@@ -68,7 +68,8 @@ jobs:
       - name: Notify Slack
         uses: slackapi/slack-github-action@v1.22.0
         with:
-          channel: '#github-action'  # Replace with your Slack channel name
+          channel: '#github-action'  # Updated to your Slack channel name
           status: ${{ job.status }}  # Use the status of the previous job (success or failure)
+          text: 'SonarQube analysis completed with status: ${{ job.status }}'  # Add this line
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
