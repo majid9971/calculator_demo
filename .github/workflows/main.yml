@@ -68,7 +68,7 @@ jobs:
       - name: Notify Slack
         uses: slackapi/slack-github-action@v1.22.0
         with:
-          channel: '#your-slack-channel'  # Replace with your Slack channel name
+          channel: '#github-action'  # Replace with your Slack channel name
           status: ${{ job.status }}  # Use the status of the previous job (success or failure)
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
