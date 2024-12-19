@@ -103,7 +103,14 @@ jobs:
     steps:
       # Step 1: Send notification to Slack using Incoming Webhook
       - name: Notify Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-          --data '{"text": "SELF HOSTED SonarQube analysis of calculator completed with status: ${{ needs.sonar.result }}."}' \
-          ${{ secrets.SLACK_WEBHOOK_URL }}
+          if [[ "${{ needs.sonar.result }}" == "success" && "${{ needs.jfrog_upload.result }}" == "success" ]]; then
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{"text": "SELF HOSTED All jobs completed successfully! SonarQube analysis and artifact upload are done."}' \
+            $SLACK_WEBHOOK_URL
+          else
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{"text": "SELF HOSTED  One or more jobs failed! Please check the workflow logs."}' \
+            $SLACK_WEBHOOK_URL
