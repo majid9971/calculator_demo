@@ -66,5 +66,5 @@ jobs:
       - name: Notify Slack
         run: |
           curl -X POST -H 'Content-type: application/json' \
-          --data '{"text": "SonarQube analysis completed with status: ${{ needs.sonar.result }}."}' \
+          --data '{"text": "SELF HOSTED SonarQube analysis of calculator completed with status: ${{ needs.sonar.result }}."}' \
           ${{ secrets.SLACK_WEBHOOK_URL }}
