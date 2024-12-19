@@ -95,10 +95,10 @@ jobs:
       - name: Upload Build Artifacts to JFrog
         run: |
           jfrog rt upload "target/*.jar" "selfhostedmaven/selfhostedmaven/"
-  notify:
+   notify:
     runs-on: ubuntu-latest
-    needs: [sonar, jfrog_upload]
-    if: always()  # Run this job regardless of the result of previous jobs
+    needs: [sonar, jfrog_upload]  # Ensure this job waits for 'sonar' and 'jfrog_upload' jobs to complete
+    if: always()  # Always run regardless of the result of previous jobs
 
     steps:
       # Step 1: Send notification to Slack using Incoming Webhook
@@ -108,9 +108,9 @@ jobs:
         run: |
           if [[ "${{ needs.sonar.result }}" == "success" && "${{ needs.jfrog_upload.result }}" == "success" ]]; then
             curl -X POST -H 'Content-type: application/json' \
-            --data '{"text": "SELF HOSTED All jobs completed successfully! SonarQube analysis and artifact upload are done."}' \
+            --data '{"text": "SELF HOSTED: All jobs completed successfully! SonarQube analysis and artifact upload are done."}' \
             $SLACK_WEBHOOK_URL
           else
             curl -X POST -H 'Content-type: application/json' \
-            --data '{"text": "SELF HOSTED  One or more jobs failed! Please check the workflow logs."}' \
+            --data '{"text": "SELF HOSTED: One or more jobs failed! Please check the workflow logs for details."}' \
             $SLACK_WEBHOOK_URL
