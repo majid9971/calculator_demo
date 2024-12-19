@@ -42,20 +42,24 @@ jobs:
           # Install Maven
           sudo apt-get update
           sudo apt-get install -y maven
-
-      # Step 4: Generate Jacoco Coverage Report
+    
+     # Step 4: Run Maven Build
+      - name: Build Project
+        run: |
+          mvn clean verify
+      # Step 5: Generate Jacoco Coverage Report
       - name: Generate Jacoco Report
         run: |
           mvn clean verify jacoco:report
 
-      # Step 5: Publish Jacoco Coverage Report as Artifact
+      # Step 6: Publish Jacoco Coverage Report as Artifact
       - name: Publish Jacoco Coverage Result
         uses: actions/upload-artifact@v3
         with:
           name: jacoco-report
           path: target/site/jacoco/index.html
 
-      # Step 6: SonarQube Analysis (using credentials)
+      # Step 7: SonarQube Analysis (using credentials)
       - name: SonarQube Analysis
         env:
           SONAR_HOST_URL: http://172.27.59.119:9000
@@ -101,5 +105,5 @@ jobs:
       - name: Notify Slack
         run: |
           curl -X POST -H 'Content-type: application/json' \
-          --data '{"text": "SELF HOSTED SonarQube analysis of calculator completed with status: ${{ needs.[sonar, jfrog_upload].result }}."}' \
+          --data '{"text": "SELF HOSTED SonarQube analysis of calculator completed with status: ${{ needs.sonar.result }}."}' \
           ${{ secrets.SLACK_WEBHOOK_URL }}
