@@ -43,7 +43,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y maven
 
-      # Step 4: SonarQube Analysis (using credentials)
+      # Step 4: Generate Jacoco Coverage Report
+      - name: Generate Jacoco Report
+        run: |
+          mvn clean verify jacoco:report
+
+      # Step 5: Publish Jacoco Coverage Report as Artifact
+      - name: Publish Jacoco Coverage Result
+        uses: actions/upload-artifact@v3
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/index.html
+
+      # Step 6: SonarQube Analysis (using credentials)
       - name: SonarQube Analysis
         env:
           SONAR_HOST_URL: http://172.27.59.119:9000
@@ -56,6 +68,29 @@ jobs:
             -Dsonar.password=${{ env.SONAR_PASSWORD }} \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
+  jfrog_upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Install JFrog CLI
+      - name: Install JFrog CLI
+        run: |
+          curl -fL https://getcli.jfrog.io | sh
+          chmod +x jfrog
+          sudo mv jfrog /usr/local/bin/
+
+      # Step 2: Configure JFrog CLI
+      - name: Configure JFrog CLI
+        run: |
+          jfrog config add my-server \
+            --artifactory-url ${{ secrets.JFROG_URL }} \
+            --user ${{ secrets.JFROG_USERNAME }} \
+            --password ${{ secrets.JFROG_PASSWORD }}
+
+      # Step 3: Upload Build Artifacts to JFrog Artifactory
+      - name: Upload Build Artifacts to JFrog
+        run: |
+          jfrog rt upload "target/*.jar" "selfhostedmaven/selfhostedmaven/"
   notify:
     runs-on: ubuntu-latest
     needs: sonar
