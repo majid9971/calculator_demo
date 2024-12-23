@@ -90,8 +90,12 @@ jobs:
             --artifactory-url ${{ secrets.JFROG_URL }} \
             --user ${{ secrets.JFROG_USERNAME }} \
             --password ${{ secrets.JFROG_PASSWORD }}
+     # Step 3: Debug Target Directory
+      - name: List Target Directory Contents
+        run: |
+          ls -la target
 
-      # Step 3: Upload Build Artifacts to JFrog Artifactory
+      # Step 4: Upload Build Artifacts to JFrog Artifactory
       - name: Upload Build Artifacts to JFrog
         run: |
           jfrog rt upload "target/*.jar" "selfhostedmaven/selfhostedmaven/"
