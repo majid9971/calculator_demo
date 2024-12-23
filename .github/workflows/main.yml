@@ -89,7 +89,6 @@ jobs:
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
         run: |
           mvn deploy -DaltDeploymentRepository=nexus::default::${NEXUS_URL} \
-            -DrepositoryId=nexus \
             -Dnexus.username=${NEXUS_USERNAME} \
             -Dnexus.password=${NEXUS_PASSWORD}
 
