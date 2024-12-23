@@ -72,52 +72,44 @@ jobs:
             -Dsonar.password=${{ env.SONAR_PASSWORD }} \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
-  jfrog_upload:
-    runs-on: ubuntu-latest
+  deploy-to-nexus:
+    runs-on:  self-hosted
+    needs: sonar  # Ensure this job runs after the 'sonar' job completes successfully
 
     steps:
-      # Step 1: Install JFrog CLI
-      - name: Install JFrog CLI
-        run: |
-          curl -fL https://getcli.jfrog.io | sh
-          chmod +x jfrog
-          sudo mv jfrog /usr/local/bin/
+      # Step 1: Checkout Code
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      # Step 2: Configure JFrog CLI
-      - name: Configure JFrog CLI
+      # Step 2: Deploy to Nexus
+      - name: Deploy to Nexus
+        env:
+          NEXUS_URL: http://172.27.59.174:8081/repository/maven-releases/
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
         run: |
-          jfrog config add my-server \
-            --artifactory-url ${{ secrets.JFROG_URL }} \
-            --user ${{ secrets.JFROG_USERNAME }} \
-            --password ${{ secrets.JFROG_PASSWORD }}
-     # Step 3: Debug Target Directory
-      - name: List Target Directory Contents
-        run: |
-          ls -la target
-
-      # Step 4: Upload Build Artifacts to JFrog Artifactory
-      - name: Upload Build Artifacts to JFrog
-        run: |
-          jfrog rt upload "target/*.jar" "selfhostedmaven/selfhostedmaven/"
+          mvn deploy -DaltDeploymentRepository=nexus::default::${NEXUS_URL} \
+            -DrepositoryId=nexus \
+            -Dnexus.username=${NEXUS_USERNAME} \
+            -Dnexus.password=${NEXUS_PASSWORD}
 
   notify:
     runs-on: ubuntu-latest
-    needs: [sonar, jfrog_upload]  # Ensure this job waits for 'sonar' and 'jfrog_upload' jobs to complete
+    needs: [sonar, deploy-to-nexus]  # Ensure this job waits for 'sonar' and 'deploy-to-nexus' jobs to complete
     if: always()  # Always run regardless of the result of previous jobs
 
     steps:
-    # Step 1: Send notification to Slack using Incoming Webhook
-    - name: Notify Slack
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      run: |
-        if [[ "${{ needs.sonar.result }}" == "success" && "${{ needs.jfrog_upload.result }}" == "success" ]]; then
-          curl -X POST -H 'Content-type: application/json' \
-          --data '{"text": "SELF HOSTED: All jobs completed successfully! SonarQube analysis and artifact upload are done."}' \
-          $SLACK_WEBHOOK_URL
-        else
-          curl -X POST -H 'Content-type: application/json' \
-          --data '{"text": "SELF HOSTED: One or more jobs failed! Please check the workflow logs for details."}' \
-          $SLACK_WEBHOOK_URL
-        fi
-
+      # Step 1: Send notification to Slack using Incoming Webhook
+      - name: Notify Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [[ "${{ needs.sonar.result }}" == "success" && "${{ needs.deploy-to-nexus.result }}" == "success" ]]; then
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{"text": "SELF HOSTED: All jobs completed successfully! SonarQube analysis and artifact upload are done."}' \
+            $SLACK_WEBHOOK_URL
+          else
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{"text": "SELF HOSTED: One or more jobs failed! Please check the workflow logs for details."}' \
+            $SLACK_WEBHOOK_URL
+          fi
