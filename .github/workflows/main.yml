@@ -1,4 +1,4 @@
-name: SonarQube Analysis Workflow
+name: SonarQube Analysis Workflow 
 
 on:
   push:
