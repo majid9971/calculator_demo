@@ -84,7 +84,7 @@ jobs:
       # Step 2: Deploy to Nexus
       - name: Deploy to Nexus
         env:
-          NEXUS_URL: http://172.27.59.174:8081/repository/maven-releases/
+          NEXUS_URL: http://172.27.59.174:8081/repository/maven-releases-artifactory/
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
         run: |
