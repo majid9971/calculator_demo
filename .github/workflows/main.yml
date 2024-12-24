@@ -73,7 +73,7 @@ jobs:
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
   deploy-to-nexus:
-    runs-on:  ubuntu-latest
+    runs-on:  self-hosted
     needs: sonar  # Ensure this job runs after the 'sonar' job completes successfully
 
     steps:
