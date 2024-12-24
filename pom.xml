@@ -49,10 +49,6 @@
       <id>nexus</id>
       <url>http://172.27.59.174:8081/repository/maven-releases-artifactory/</url>
     </repository>
-    <snapshotRepository>
-      <id>nexus</id>
-      <url>http://172.27.59.174:8081/repository/maven-snapshots/</url>
-    </snapshotRepository>
   </distributionManagement>
 	
   <build>
