@@ -45,11 +45,16 @@
   </dependencies>
 	
 <distributionManagement>
-    <repository>
-      <id>nexus</id>
-      <url>http://172.27.59.174:8081/repository/maven-releases-artifactory/</url>
-    </repository>
-  </distributionManagement>
+  <repository>
+    <id>github-action-releases</id>
+    <url>http://172.27.59.174:8081/repository/github-action/</url>
+  </repository>
+  <snapshotRepository>
+    <id>github-action-snapshots</id>
+    <url>http://172.27.59.174:8081/repository/github-action/</url>
+  </snapshotRepository>
+</distributionManagement>
+
 	
   <build>
 		<plugins>
