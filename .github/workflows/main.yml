@@ -81,30 +81,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Configure Maven settings
-      - name: Configure Maven settings
-        run: |
-          mkdir -p ~/.m2
-          cat <<EOF > ~/.m2/settings.xml
-          <settings>
-            <servers>
-              <server>
-                <id>nexus</id>
-                <username>${{ secrets.NEXUS_USERNAME }}</username>
-                <password>${{ secrets.NEXUS_PASSWORD }}</password>
-              </server>
-            </servers>
-          </settings>
-          EOF
-
-      # Step 3: Deploy to Nexus
-      - name: Build and Deploy
-        run: mvn clean deploy
+      # Deploy to Nexus
+      - name: Deploy to Nexus
         env:
           NEXUS_URL: ${{ secrets.NEXUS_URL }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: |
+          mvn deploy \
+            -DaltDeploymentRepository=nexus::default::${NEXUS_URL}/repository/your-repo-name \
+            -Dnexus.username=${NEXUS_USERNAME} \
+            -Dnexus.password=${NEXUS_PASSWORD}
 
   notify:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [sonar, deploy-to-nexus]  # Ensure this job waits for 'sonar' and 'deploy-to-nexus' jobs to complete
     if: always()  # Always run regardless of the result of previous jobs
 
