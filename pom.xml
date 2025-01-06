@@ -47,11 +47,11 @@
 <distributionManagement>
   <repository>
     <id>github-action-releases</id>
-    <url>http://172.27.59.174:8081/repository/github-action/</url>
+    <url>http://172.27.59.174:8081/#browse/browse:github-action</url>
   </repository>
   <snapshotRepository>
     <id>github-action-snapshots</id>
-    <url>http://172.27.59.174:8081/repository/github-action/</url>
+    <url>http://172.27.59.174:8081/#browse/browse:github-action</url>
   </snapshotRepository>
 </distributionManagement>
 
