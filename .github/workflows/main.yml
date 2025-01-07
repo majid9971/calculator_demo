@@ -95,7 +95,8 @@ jobs:
 
   notify:
     runs-on: self-hosted
-    needs: [sonar, deploy-to-nexus]  # Ensure this job waits for 'sonar' and 'deploy-to-nexus' jobs to complete
+    needs: sonar
+  #  needs: [sonar, deploy-to-nexus]  # Ensure this job waits for 'sonar' and 'deploy-to-nexus' jobs to complete
     if: always()  # Always run regardless of the result of previous jobs
 
     steps:
