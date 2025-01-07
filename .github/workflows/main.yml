@@ -86,7 +86,7 @@ jobs:
           SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
         run: |
           # Fetch the latest analysis task
-          ANALYSIS_JSON=$(curl -s -u "$SONAR_USERNAME:$SONAR_PASSWORD" "$SONAR_HOST_URL/api/ce/activity?component=majid9971_latest-java")
+          ANALYSIS_JSON=$(curl -s -u "$SONAR_USERNAME:$SONAR_PASSWORD" "$SONAR_HOST_URL/api/ce/activity?component=26052_jacoco_Java_Project_Scan_Pom:master")
           echo "Analysis JSON: $ANALYSIS_JSON"
 
           # Extract the latest task ID
@@ -112,7 +112,7 @@ jobs:
           done
 
           # Fetch the quality gate status
-          QUALITY_GATE_JSON=$(curl -s -u "$SONAR_USERNAME:$SONAR_PASSWORD" "$SONAR_HOST_URL/api/qualitygates/project_status?projectKey=majid9971_latest-java")
+          QUALITY_GATE_JSON=$(curl -s -u "$SONAR_USERNAME:$SONAR_PASSWORD" "$SONAR_HOST_URL/api/qualitygates/project_status?projectKey=26052_jacoco_Java_Project_Scan_Pom:master")
           echo "Quality Gate JSON: $QUALITY_GATE_JSON"
 
           QUALITY_GATE_STATUS=$(echo "$QUALITY_GATE_JSON" | jq -r '.projectStatus.status')
