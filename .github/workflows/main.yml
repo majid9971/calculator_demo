@@ -72,26 +72,26 @@ jobs:
             -Dsonar.password=${{ env.SONAR_PASSWORD }} \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
-  deploy-to-nexus:
-    runs-on: self-hosted
-    needs: sonar  # Ensure this job runs after the 'sonar' job completes successfully
+  # deploy-to-nexus:
+  #   runs-on: self-hosted
+  #   needs: sonar  # Ensure this job runs after the 'sonar' job completes successfully
 
-    steps:
-      # Step 1: Checkout Code
-      - name: Checkout code
-        uses: actions/checkout@v3
+  #   steps:
+  #     # Step 1: Checkout Code
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
 
-      # Deploy to Nexus
-      - name: Deploy to Nexus
-        env:
-          NEXUS_URL: ${{ secrets.NEXUS_URL }}
-          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-        run: |
-          mvn deploy \
-            -DaltDeploymentRepository=nexus::default::${NEXUS_URL}/repository/your-repo-name \
-            -Dnexus.username=${NEXUS_USERNAME} \
-            -Dnexus.password=${NEXUS_PASSWORD}
+  #     # Deploy to Nexus
+  #     - name: Deploy to Nexus
+  #       env:
+  #         NEXUS_URL: ${{ secrets.NEXUS_URL }}
+  #         NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+  #         NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+  #       run: |
+  #         mvn deploy \
+  #           -DaltDeploymentRepository=nexus::default::${NEXUS_URL}/repository/your-repo-name \
+  #           -Dnexus.username=${NEXUS_USERNAME} \
+  #           -Dnexus.password=${NEXUS_PASSWORD}
 
   notify:
     runs-on: self-hosted
