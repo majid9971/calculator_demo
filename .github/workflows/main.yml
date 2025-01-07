@@ -21,6 +21,12 @@ jobs:
         with:
           java-version: 11
           distribution: temurin
+          
+      # Step 2.5: Install Required Tools
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
 
       # Step 3: Install Maven with lock handling
       - name: Install Maven
