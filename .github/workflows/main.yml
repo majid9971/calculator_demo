@@ -71,7 +71,40 @@ jobs:
             -Dsonar.login=${{ env.SONAR_USERNAME }} \
             -Dsonar.password=${{ env.SONAR_PASSWORD }} \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+ 
+   # Step 8: Check Quality Gate Status
+      - name: Check SonarQube Quality Gate Status
+        env:
+          SONAR_HOST_URL: http://172.27.59.119:9000
+          SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
+          SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
+        run: |
+          # Extract the task ID from the analysis report URL
+          TASK_ID=$(curl -s -u "$SONAR_USERNAME:$SONAR_PASSWORD" "$SONAR_HOST_URL/api/ce/component?componentKey=majid9971_latest-java" | jq -r '.queue[0].id')
+          echo "Task ID: $TASK_ID"
 
+          # Wait for the analysis to complete
+          while true; do
+            STATUS=$(curl -s -u "$SONAR_USERNAME:$SONAR_PASSWORD" "$SONAR_HOST_URL/api/ce/task?id=$TASK_ID" | jq -r '.task.status')
+            echo "Analysis Status: $STATUS"
+            if [[ "$STATUS" == "SUCCESS" ]]; then
+              break
+            elif [[ "$STATUS" == "FAILED" ]]; then
+              echo "SonarQube analysis failed."
+              exit 1
+            fi
+            sleep 10
+          done
+
+          # Check the quality gate status
+          QUALITY_GATE_STATUS=$(curl -s -u "$SONAR_USERNAME:$SONAR_PASSWORD" "$SONAR_HOST_URL/api/qualitygates/project_status?projectKey=majid9971_latest-java" | jq -r '.projectStatus.status')
+          echo "Quality Gate Status: $QUALITY_GATE_STATUS"
+
+          if [[ "$QUALITY_GATE_STATUS" != "OK" ]]; then
+            echo "Quality Gate failed. Exiting..."
+            exit 1
+          fi
+          
   # deploy-to-nexus:
   #   runs-on: self-hosted
   #   needs: sonar  # Ensure this job runs after the 'sonar' job completes successfully
