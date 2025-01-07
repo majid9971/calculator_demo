@@ -1,4 +1,4 @@
-name: SonarQube Analysis Workflowa
+name: SonarQube Analysis Workflow
 
 on:
   push:
@@ -22,42 +22,50 @@ jobs:
           java-version: 11
           distribution: temurin
 
-      # Step 2.5: Install Required Tools
+      # Step 3: Install jq (for JSON processing)
       - name: Install jq
         run: |
           sudo apt-get update
           sudo apt-get install -y jq
 
-      # Step 3: Install Maven with lock handling
+      # Step 4: Install Maven with lock handling
       - name: Install Maven
         run: |
+          # Wait and retry if lock file exists
           while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
             echo "Waiting for lock to be released..."
             sleep 5
           done
+          # Remove locks if necessary
           sudo rm -f /var/lib/dpkg/lock-frontend
           sudo rm -f /var/lib/dpkg/lock
           sudo rm -f /var/cache/apt/archives/lock
+          
+          # Fix any broken dpkg process
           sudo dpkg --configure -a
+          
+          # Install Maven
           sudo apt-get update
           sudo apt-get install -y maven
 
-      # Step 4: Run Maven Build
+      # Step 5: Run Maven Build
       - name: Build Project
-        run: mvn clean verify
+        run: |
+          mvn clean verify
 
-      # Step 5: Generate Jacoco Coverage Report
+      # Step 6: Generate Jacoco Coverage Report
       - name: Generate Jacoco Report
-        run: mvn clean verify jacoco:report
+        run: |
+          mvn clean verify jacoco:report
 
-      # Step 6: Publish Jacoco Coverage Report as Artifact
+      # Step 7: Publish Jacoco Coverage Report as Artifact
       - name: Publish Jacoco Coverage Result
         uses: actions/upload-artifact@v3
         with:
           name: jacoco-report
           path: target/site/jacoco/index.html
 
-      # Step 7: SonarQube Analysis
+      # Step 8: SonarQube Analysis
       - name: SonarQube Analysis
         env:
           SONAR_HOST_URL: http://172.27.59.119:9000
@@ -70,16 +78,18 @@ jobs:
             -Dsonar.password=${{ env.SONAR_PASSWORD }} \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
-      # Step 8: Check SonarQube Quality Gate Status
+      # Step 9: Check Quality Gate Status
       - name: Check SonarQube Quality Gate Status
         env:
           SONAR_HOST_URL: http://172.27.59.119:9000
           SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
           SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
         run: |
+          # Fetch the latest analysis task
           ANALYSIS_JSON=$(curl -s -u "$SONAR_USERNAME:$SONAR_PASSWORD" "$SONAR_HOST_URL/api/ce/activity?component=majid9971_latest-java")
           echo "Analysis JSON: $ANALYSIS_JSON"
 
+          # Extract the latest task ID
           TASK_ID=$(echo "$ANALYSIS_JSON" | jq -r '.tasks[0].id')
           echo "Task ID: $TASK_ID"
 
@@ -88,6 +98,7 @@ jobs:
             exit 1
           fi
 
+          # Wait for the analysis to complete
           while true; do
             STATUS=$(curl -s -u "$SONAR_USERNAME:$SONAR_PASSWORD" "$SONAR_HOST_URL/api/ce/task?id=$TASK_ID" | jq -r '.task.status')
             echo "Analysis Status: $STATUS"
@@ -100,40 +111,24 @@ jobs:
             sleep 10
           done
 
-          QUALITY_GATE_STATUS=$(curl -s -u "$SONAR_USERNAME:$SONAR_PASSWORD" "$SONAR_HOST_URL/api/qualitygates/project_status?projectKey=majid9971_latest-java" | jq -r '.projectStatus.status')
+          # Fetch the quality gate status
+          QUALITY_GATE_JSON=$(curl -s -u "$SONAR_USERNAME:$SONAR_PASSWORD" "$SONAR_HOST_URL/api/qualitygates/project_status?projectKey=majid9971_latest-java")
+          echo "Quality Gate JSON: $QUALITY_GATE_JSON"
+
+          QUALITY_GATE_STATUS=$(echo "$QUALITY_GATE_JSON" | jq -r '.projectStatus.status')
           echo "Quality Gate Status: $QUALITY_GATE_STATUS"
 
-          if [[ "$QUALITY_GATE_STATUS" != "OK" ]]; then
+          if [[ "$QUALITY_GATE_STATUS" == "OK" ]]; then
+            echo "Quality Gate passed."
+          else
             echo "Quality Gate failed. Exiting..."
             exit 1
           fi
 
- # deploy-to-nexus:
-  #   runs-on: self-hosted
-  #   needs: sonar  # Ensure this job runs after the 'sonar' job completes successfully
-
-  #   steps:
-  #     # Step 1: Checkout Code
-  #     - name: Checkout code
-  #       uses: actions/checkout@v3
-
-  #     # Deploy to Nexus
-  #     - name: Deploy to Nexus
-  #       env:
-  #         NEXUS_URL: ${{ secrets.NEXUS_URL }}
-  #         NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-  #         NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-  #       run: |
-  #         mvn deploy \
-  #           -DaltDeploymentRepository=nexus::default::${NEXUS_URL}/repository/your-repo-name \
-  #           -Dnexus.username=${NEXUS_USERNAME} \
-  #           -Dnexus.password=${NEXUS_PASSWORD}
-  
-  
   notify:
     runs-on: self-hosted
     needs: sonar
-    if: always()
+    if: always()  # Always run regardless of the result of previous jobs
 
     steps:
       # Step 1: Send notification to Slack using Incoming Webhook
@@ -143,9 +138,10 @@ jobs:
         run: |
           if [[ "${{ needs.sonar.result }}" == "success" ]]; then
             curl -X POST -H 'Content-type: application/json' \
-            --data '{"text": "SELF HOSTED: All jobs completed successfully! SonarQube analysis is complete."}' \
+            --data '{"text": "SELF HOSTED: All jobs completed successfully! SonarQube analysis and artifact upload are done."}' \
             $SLACK_WEBHOOK_URL
           else
             curl -X POST -H 'Content-type: application/json' \
-            --data '{"text": "SELF HOSTED: SonarQube Quality Gate check failed! Check workflow logs for details."}' \
+            --data '{"text": "SELF HOSTED: One or more jobs failed! Please check the workflow logs for details."}' \
             $SLACK_WEBHOOK_URL
+          fi
